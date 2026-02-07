@@ -46,26 +46,7 @@ func main() {
 	// strategies
 	postgresRetryStrategy := config.MakeStrategy(cfg.Database.PostgresRetryConfig)
 
-	// connect to db
-	var postgresDB *dbpg.DB
-	err = retry.DoContext(ctx, postgresRetryStrategy, func() error {
-		var postgresConnErr error
-		postgresDB, postgresConnErr = dbpg.New(cfg.Database.MasterDSN, cfg.Database.SlaveDSNs,
-			&dbpg.Options{
-				MaxOpenConns:    cfg.Database.MaxOpenConnections,
-				MaxIdleConns:    cfg.Database.MaxIdleConnections,
-				ConnMaxLifetime: time.Duration(cfg.Database.ConnectionMaxLifetimeSeconds) * time.Second,
-			})
-		return postgresConnErr
-	})
-
-	if err != nil {
-		zlog.Logger.Fatal().
-			Err(err).
-			Msg("failed to connect to database")
-	}
-
-	zlog.Logger.Info().Msg("Successfully connected to PostgreSQL")
+	// create migrations cHouse
 
 	migrationsPathClickHouse := "file:///app/internal/migrations/clickhouse" //"../internal/migrations/clickhouse"
 	err = postgres.MigrateUpClickHouse(cfg.ClickHouse.Addr, migrationsPathClickHouse)
@@ -83,9 +64,33 @@ func main() {
 			Msg("failed to connect to cHouse")
 	}
 
+	defer conn.Close()
+
 	zlog.Logger.Info().Msg("Successfully connected to ClickHouse")
 
-	// create migrations
+	// connect to db
+	var postgresDB *dbpg.DB
+	err = retry.DoContext(ctx, postgresRetryStrategy, func() error {
+		var postgresConnErr error
+		postgresDB, postgresConnErr = dbpg.New(cfg.Database.MasterDSN, cfg.Database.SlaveDSNs,
+			&dbpg.Options{
+				MaxOpenConns:    cfg.Database.MaxOpenConnections,
+				MaxIdleConns:    cfg.Database.MaxIdleConnections,
+				ConnMaxLifetime: time.Duration(cfg.Database.ConnectionMaxLifetimeSeconds) * time.Second,
+			})
+		return postgresConnErr
+	})
+	defer postgresDB.Master.Close()
+
+	if err != nil {
+		zlog.Logger.Fatal().
+			Err(err).
+			Msg("failed to connect to database")
+	}
+
+	zlog.Logger.Info().Msg("Successfully connected to PostgreSQL")
+
+	// create migrations db
 	migrationsPathPostgress := "file:///app/internal/migrations/db" // "../internal/migrations/db"
 	err = postgres.MigrateUp(cfg.Database.MasterDSN, migrationsPathPostgress)
 	if err != nil {
@@ -93,7 +98,6 @@ func main() {
 	}
 
 	zlog.Logger.Info().Msg("Successfully connected to create migrations fo PSQL")
-
 
 	// init repo
 	store := repository.NewRepository(postgresDB, postgresRetryStrategy)
@@ -116,6 +120,7 @@ func main() {
 	}
 
 	zlog.Logger.Info().Msg("server gracefully stopped")
+
 	ctxStop()
 	zlog.Logger.Info().Msg("background operations gracefully stopped")
 }
