@@ -1,21 +1,21 @@
 services:
-  # shortener:
-  #   build:
-  #     context: ../shortener
-  #     dockerfile: Dockerfile
-  #   image: shortener:latest
-  #   restart: unless-stopped
-  #   depends_on:
-  #     postgres_master:
-  #       condition: service_healthy
-  #   env_file:
-  #     - ../config/.env
-  #   ports:
-  #     - "8089:8089"
-  #   expose:
-  #     - "8089"
-  #   networks:
-  #     - backend
+  shortener:
+    build:
+      context: ../shortener
+      dockerfile: Dockerfile
+    image: shortener:latest
+    restart: unless-stopped
+    depends_on:
+      postgres_master:
+        condition: service_healthy
+    env_file:
+      - ../config/.env
+    ports:
+      - "8089:8089"
+    expose:
+      - "8089"
+    networks:
+      - backend
   postgres_master:
     image: postgres:16-alpine
     ports:
@@ -30,8 +30,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # networks:
-    #   - backend
+    networks:
+      - backend
   
   clickhouse:
     image: clickhouse/clickhouse-server:24.8-alpine
@@ -49,14 +49,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    # networks:
-    #   - backend
+    networks:
+      - backend
 
 
 volumes:
   postgres_master_data:
   clickhouse_data:  
 
-# networks:
-#   backend:
-#     driver: bridge
+networks:
+  backend:
+    driver: bridge

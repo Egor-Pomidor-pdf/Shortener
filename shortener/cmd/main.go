@@ -28,7 +28,7 @@ func main() {
 	ctx, ctxStop := signal.NotifyContext(ctx, os.Interrupt)
 
 	// init config
-	cfg, err := config.NewConfig("../config/.env", "")
+	cfg, err := config.NewConfig("", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func main() {
 
 	zlog.Logger.Info().Msg("Successfully connected to PostgreSQL")
 
-	migrationsPathClickHouse := "file://./internal/migrations/clickhouse" //"../internal/migrations/clickhouse"
+	migrationsPathClickHouse := "file:///app/internal/migrations/clickhouse" //"../internal/migrations/clickhouse"
 	err = postgres.MigrateUpClickHouse(cfg.ClickHouse.Addr, migrationsPathClickHouse)
 	if err != nil {
 		zlog.Logger.Fatal().Err(err).Msg("couldn't migrate migrations fo ClickHouse")
@@ -86,7 +86,7 @@ func main() {
 	zlog.Logger.Info().Msg("Successfully connected to ClickHouse")
 
 	// create migrations
-	migrationsPathPostgress := "file://./internal/migrations/db" // "../internal/migrations/db"
+	migrationsPathPostgress := "file:///app/internal/migrations/db" // "../internal/migrations/db"
 	err = postgres.MigrateUp(cfg.Database.MasterDSN, migrationsPathPostgress)
 	if err != nil {
 		zlog.Logger.Fatal().Err(err).Msg("couldn't migrate postgres on master DSN")

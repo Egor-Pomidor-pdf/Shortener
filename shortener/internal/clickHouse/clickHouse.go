@@ -13,7 +13,7 @@ import (
 func InitClickHouseConn(cfg *config.ClickHouseConfig) (driver.Conn, error) {
     // Опции для подключения
     opts := &clickhouse.Options{
-        Addr: []string{"localhost:9000"},
+        Addr: []string{"clickhouse:9000"}, //hardcode( i am sorry
         Auth: clickhouse.Auth{
             Database: cfg.Database,
             Username: cfg.Username,
