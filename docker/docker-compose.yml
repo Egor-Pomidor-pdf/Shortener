@@ -1,0 +1,62 @@
+services:
+  # shortener:
+  #   build:
+  #     context: ../shortener
+  #     dockerfile: Dockerfile
+  #   image: shortener:latest
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres_master:
+  #       condition: service_healthy
+  #   env_file:
+  #     - ../config/.env
+  #   ports:
+  #     - "8089:8089"
+  #   expose:
+  #     - "8089"
+  #   networks:
+  #     - backend
+  postgres_master:
+    image: postgres:16-alpine
+    ports:
+      - "5435:5432"
+    env_file:
+      - ../config/.env
+    volumes:
+      - postgres_master_data:/var/lib/postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # networks:
+    #   - backend
+  
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    ports:
+      - "8123:8123" 
+      - "9000:9000" 
+    env_file:
+      - ../config/.env
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # networks:
+    #   - backend
+
+
+volumes:
+  postgres_master_data:
+  clickhouse_data:  
+
+# networks:
+#   backend:
+#     driver: bridge
