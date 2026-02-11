@@ -7,8 +7,6 @@ bin/
 vendor/
 go.sum
 
-# Environment files
-.env
 
 # Database data
 pgdata/
